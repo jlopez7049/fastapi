@@ -1,52 +1,97 @@
-import json
-from typing import Union
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from models import Usuario, Producto, Pedido
+from gestor_archivos import GestorArchivos
 
 app = FastAPI()
 
-nombres = []
+gestor_usuarios = GestorArchivos('usuarios.json', Usuario)
+gestor_productos = GestorArchivos('productos.json', Producto)
+gestor_pedidos = GestorArchivos('pedidos.json', Pedido)
 
-@app.get("/personas/{personas_id}")
-def obetener_persona(personas_id: str):
-    with open("personas.json", "r") as file:
-        texto= file.read()
-        personas_json = json.loads(texto)
-        print(personas_json[personas_id])
-    return personas_json[personas_id]
+@app.get("/usuarios")
+def mostrar_usuarios():
+    return gestor_usuarios.get_all()
 
-@app.post("/personas")
-def crear_persona(personas_id: str,edad: str):
-    with open("personas.json", "r") as file:
-        texto= file.read()
-        personas_json = json.loads(texto)
-    with open("personas.json", "w") as file:
-        personas_json.append({
-        "nombre": personas_id,
-        "edad": edad,
-            })
-        json.dump(personas_json, file, indent= 4)
-    return personas_json
+@app.get("/usuarios/{id}")
+def optener_usuario_id(id: int):
+    usuario = gestor_usuarios.get_by_id(id)
+    if usuario is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return usuario
 
+@app.post("/usuarios")
+def añadir_usuario(usuario: Usuario):
+    gestor_usuarios.add(usuario)
+    return {"mensaje": "Usuario agregado"}
 
-@app.put("/personas/{personas_id}")
-def actualizar_persona(personas_id: str, edad: str):
-    with open("personas.json", "r") as file:
-        texto = file.read()
-        personas_json = json.loads(texto)
-    for persona in personas_json:
-        if persona["nombre"] == personas_id:
-            persona["edad"] = edad
-            break
-    with open("personas.json", "w") as file:
-        json.dump(personas_json, file, indent=4)
-    return personas_json
+@app.put("/usuarios/{id}")
+def actualizar_usuario(id: int, usuario: Usuario):
+    try:
+        gestor_usuarios.update(id, usuario.dict())
+        return {"mensaje": "Usuario actualizado"}
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-@app.delete("/personas/{personas_id}")
-def borrar_persona(persona_id:str):
-    with open("frutas.json", "r") as file:
-        texto= file.read()
-        personas_json =json.loads(texto)
-        personas_json = [persona for persona in personas_json if persona["nombre"] != persona_id]
-    with open("frutas.json", "w") as file:
-        json.dump(personas_json, file, indent=4)
-    return personas_json
+@app.delete("/usuarios/{id}")
+def borrar_usuario(id: int):
+    gestor_usuarios.delete(id)
+    return {"mensaje": "Usuario eliminado"}
+
+@app.get("/productos")
+def mostrar_productos():
+    return gestor_productos.get_all()
+
+@app.get("/productos/{id}")
+def optener_producto_id(id: int):
+    producto = gestor_productos.get_by_id(id)
+    if producto is None:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    return producto
+
+@app.post("/productos")
+def añadir_producto(producto: Producto):
+    gestor_productos.add(producto)
+    return {"mensaje": "Producto agregado"}
+
+@app.put("/productos/{id}")
+def actualizar_producto(id: int, producto: Producto):
+    try:
+        gestor_productos.update(id, producto.dict())
+        return {"mensaje": "Producto actualizado"}
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+@app.delete("/productos/{id}")
+def eliminar_producto(id: int):
+    gestor_productos.delete(id)
+    return {"mensaje": "Producto eliminado"}
+
+# Endpoints para Pedidos
+@app.get("/pedidos")
+def mostrar_pedidos():
+    return gestor_pedidos.get_all()
+
+@app.get("/pedidos/{id}")
+def obtener_pedido(id: int):
+    pedido = gestor_pedidos.get_by_id(id)
+    if pedido is None:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    return pedido
+
+@app.post("/pedidos")
+def añadir_pedido(pedido: Pedido):
+    gestor_pedidos.add(pedido)
+    return {"mensaje": "Pedido agregado"}
+
+@app.put("/pedidos/{id}")
+def actualizar_pedido(id: int, pedido: Pedido):
+    try:
+        gestor_pedidos.update(id, pedido.dict())
+        return {"mensaje": "Pedido actualizado"}
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+
+@app.delete("/pedidos/{id}")
+def borrar_pedido(id: int):
+    gestor_pedidos.delete(id)
+    return {"mensaje": "Pedido eliminado"}
